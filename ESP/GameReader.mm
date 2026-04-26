@@ -306,23 +306,17 @@ Vector2 ToMiniMap(Vector2 MiniMap,Vector2 HeroPos)
 //读取屏幕坐标
 static Vector2 GetPlayerPos(long Target)
 {
-    long Target_P1 = Read_Long(Target+0x240);//0x1F0-0x220
-    long Target_P2 = Read_Long(Target_P1+0x10);
-    long Target_P3 = Read_Long(Target_P2);
-    long Target_P4 = Read_Long(Target_P3 + 0x10);
+    long v1 = Read_Long(Target + 0x268); 
+    long v2 = Read_Long(v1 + 0x10);
+    long v3 = Read_Long(v2 + 0x0);
+    long v4 = Read_Long(v3 + 0x60); 
     
-    int x1 = Read_Short(Target_P4);
-    int x2 = Read_Short(Target_P4+2);
-    
-    int y1 = Read_Short(Target_P4+8);
-    int y2 = Read_Short(Target_P4+10);
-   
-    if (x1 == 6710 || x1 == 0) {
-        return {MemPosx,MemPosy};
-    }
-    MemPosx = (float)(x1-x2)/(float)1000;
-    MemPosy = (float)(y1-y2)/(float)1000;
-    NSLog(@"SMOBA-Apibug 屏幕坐标MemPosx:%f  MemPosy:%f",MemPosx,MemPosy);
+    int x = Read_Int(v4 + 0x0); // 最新 HTML 逻辑：直接读取 Int
+    int y = Read_Int(v4 + 0x8);
+
+    if (x == 0) return {MemPosx,MemPosy};
+    MemPosx = (float)x / 1000.0f;
+    MemPosy = (float)y / 1000.0f;
     return {MemPosx,MemPosy};
 
 }
