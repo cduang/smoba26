@@ -32,6 +32,10 @@ jobs:
           fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
+      - name: Install ldid
+        shell: bash
+        run: brew install ldid
+
       - name: Build package
         shell: bash
         run: |
