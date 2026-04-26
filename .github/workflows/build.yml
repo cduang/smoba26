@@ -1,4 +1,4 @@
-name: Build and Release ESP Package
+name: Build and Release Package
 
 on:
   workflow_dispatch:
@@ -55,3 +55,4 @@ jobs:
         with:
           files: packages/*.tipa
           generate_release_notes: true
+          fail_on_unmatched_files: true
