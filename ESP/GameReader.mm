@@ -454,7 +454,7 @@ static void GetHeroSkill(long Target, bool *Skill1, bool *Skill2, bool *Skill3, 
 void GetPlayers(std::vector<SmobaHeroData> *Players)
 {
     Players->clear();
-    long PDatas = Read_Long(Read_Long(Game_Data)+0x380);//0x378
+    long PDatas = Read_Long(Game_Data + 0x138);
     NSLog(@"SMOBA-Apibug PDatas %ld", PDatas);
     if (PDatas > Imageaddress)
     {
@@ -532,14 +532,14 @@ void GetPlayers(std::vector<SmobaHeroData> *Players)
 
 //当前血量
 static int32_t GetGameHP(long Target){
-    long HeroHP = Read_Long(Target+0x148);
-    int32_t HP = Read_Int(HeroHP+0xA0);
+    long HeroHP = Read_Long(Target+0x188);
+    int32_t HP = Read_Int(HeroHP+0xA8);
     return HP;
 }
 //最大血量
 static int32_t GetGameMaxHP(long Target){
-    long MonsterMaxHP = Read_Long(Target+0x148);
-    int32_t MaxHP = Read_Int(MonsterMaxHP+0xA8);
+    long MonsterMaxHP = Read_Long(Target+0x188);
+    int32_t MaxHP = Read_Int(MonsterMaxHP+0xB0);
     return MaxHP;
 }
 
@@ -551,13 +551,14 @@ void GetMonster(std::vector<SmobaMonsterData> *野怪数据)
     if (PDatas > Imageaddress)
     {
         
-        long Monster_Data = *(long*)(PDatas+0x148);
-        int Monster_Count = *(int*)(PDatas+0x164);
+        long Monster_Data = *(long*)(PDatas+0x60);
+        int Monster_Count = *(int*)(PDatas+0x7C);
         NSLog(@"Monster_Count=%d",Monster_Count);
         for (int i=0; i < Monster_Count; i++) {
             SmobaMonsterData Monster;
             long P_Monster = *(long*)(Monster_Data+i*0x18);
             Monster.野怪ID = GetPlayerHero(P_Monster);
+            if (Monster.野怪ID > 10000 || Monster.野怪ID < 100) continue; 
             Monster.野怪当前血量 = GetGameHP(P_Monster);
             Monster.野怪最大血量 = GetGameMaxHP(P_Monster);
             Monster.MonsterPos = GetPlayerPos(P_Monster);
@@ -594,9 +595,15 @@ void GetMonsterTime(std::vector<SmobaMonsterTime> *野怪倒计时数据)
 
 //矩阵
 bool RefreshMatrix() {
-    long viewportAddr = Read_Long(Game_Viewport + 0xb8);
-    long level1Addr = Read_Long(viewportAddr + 0x0);
-    long matrixAddr = Read_Long(level1Addr + 0x10) + 0x30c;
+    // long viewportAddr = Read_Long(Game_Viewport + 0xb8);
+    // long matrixAddr = Read_Long(Read_Long(viewportAddr + 0x0) + 0x10) + 0x30c; //原因：旧路径失效
+    
+    // 新路径：HTML 逻辑 [[[[base+0xB8]+0x0]+0x8]+0x128]
+    long v1 = Read_Long(Game_Viewport + 0xB8);
+    long v2 = Read_Long(v1 + 0x0);
+    long v3 = Read_Long(v2 + 0x8);
+    long matrixAddr = v3 + 0x128; // 最新数据起始偏移为 0x128
+    
     Read_Data(matrixAddr, 64, &ViewMatrix);
     return true;
 }
@@ -633,8 +640,10 @@ void* find_module_by_path(char* machoPath)
 bool Gameinitialization()
 {
     Imageaddress = get_module_base();
-    Game_Data = Read_Long(Imageaddress+0xE7D23F8);
-    Game_Viewport = Read_Long(Imageaddress+0xEDD77D0);
+    //Game_Data = Read_Long(Imageaddress+0xE7D23F8);
+    //Game_Viewport = Read_Long(Imageaddress+0xEDD77D0);
+    Game_Data = Read_Long(Imageaddress + 0x1338ED90); 
+    Game_Viewport = Read_Long(Imageaddress + 0x12DFB130); 
     NSLog(@"SMOBA-Apibug Imageaddress %ld",Imageaddress);
     NSLog(@"SMOBA-Apibug Game_Data %ld",Game_Data);
     NSLog(@"SMOBA-Apibug Game_Viewport %ld",Game_Viewport);
