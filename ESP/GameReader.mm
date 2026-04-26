@@ -649,4 +649,3 @@ bool Gameinitialization()
     NSLog(@"SMOBA-Apibug Game_Viewport %ld",Game_Viewport);
     return Game_Data > Imageaddress && Game_Viewport > Imageaddress;
 }
-
