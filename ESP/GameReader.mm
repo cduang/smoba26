@@ -339,24 +339,24 @@ static Vector2 GetMonsterPos(long Target)
 //获取团队阵营
 static int GetPlayerTeam(long Target)
 {
-    return Read_Int(Target+0x3C);//0x34
+    return Read_Int(Target+0x5C);//0x3C
 }
 
 //判断死亡
 static bool GetPlayerDead(long Target)
 {
-    long PlayerHP = Read_Long(Target+0x160);//0x148
-    return Read_Int(PlayerHP+0x98)==0;
+    long PlayerHP = Read_Long(Target+0x188);//0x160
+    return Read_Int(PlayerHP+0xA8)==0;//0x98
 }
 
 //血量百分百
 static float GetPlayerHeroHp(long Target)
 {
-    long PlayerHP = Read_Long(Target+0x160);//0x148
+    long PlayerHP = Read_Long(Target+0x188);//0x160
     
-    int hp = Read_Int(PlayerHP+0x98);
+    int hp = Read_Int(PlayerHP+0xA8);
     
-    int v5= Read_Int(PlayerHP+0xA0);
+    int v5= Read_Int(PlayerHP+0xB0);
     
     if(hp == 0 || v5 == 0) return 0;
     
@@ -378,7 +378,7 @@ static float GetMonsterHp(long Target)
 //获取玩家英雄
 static int GetPlayerHero(long Target)
 {
-    return Read_Int(Target+0x30);//头像偏移0x28
+    return Read_Int(Target+0x50);//头像偏移0x28
     
 }
 //回城
