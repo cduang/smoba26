@@ -412,20 +412,19 @@ SkillView* 玩家技能[10];
                             {
                                 
                                 //方框
-                                if (方框) {
+                                if (绘制方框) {
                                     [Path_Rect appendPath:[UIBezierPath bezierPathWithRect:CGRectMake(BoxPos.x-20, BoxPos.y-48, 40, 48)]];
                                 }
                                 
                                 
-                                //if (射线) {
+                                if (绘制射线) {
                                     UIBezierPath *bezierPath = [UIBezierPath bezierPath];
                                     [bezierPath moveToPoint:CGPointMake(gaodu/2, kuandu/2)];
                                     [bezierPath addLineToPoint:CGPointMake(BoxPos.x-20, BoxPos.y-48)];
-                                    
                                     [Path_Rect appendPath:bezierPath];
-                                //}
+                                }
                                 
-                                if (技能)
+                                if (绘制技能)
                                 {
                                     SkillTable[i].center = CGPointMake(BoxPos.x, BoxPos.y + 10);
                                     [SkillTable[i] setHidden:NO];
@@ -504,7 +503,7 @@ SkillView* 玩家技能[10];
                                 }
                                 
                                 //透视
-                                if (头像)
+                                if (绘制头像)
                                 {
                                     Vector2 MiniPos = ToMiniMap(MiniMap, heroData[i].Pos);
                                     float R=MiniMap.y/16;
