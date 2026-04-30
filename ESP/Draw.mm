@@ -17,7 +17,10 @@
 #import <sys/types.h>
 #import <sys/sysctl.h>
 #import <mach-o/dyld.h>
+#import <MetalKit/MetalKit.h>
+#import <vector>
 #import "HeeeNoScreenShotView.h"
+#import "ImGuiMTKView.h"
 #define kuandu  [UIScreen mainScreen].bounds.size.width
 #define gaodu [UIScreen mainScreen].bounds.size.height
 #define SMOBA_NSLog(format, ...) NSLog(@"SMOBA-Apibug: " format, ##__VA_ARGS__)
@@ -45,9 +48,7 @@
 @implementation SkillView
 @end
 
-@class ImGuiMTKView;
-
-@interface 绘图吧() <ImGuiMTKViewDelegate>
+@interface 绘图吧 : UIView <ImGuiMTKViewDelegate>
 @property (nonatomic, strong) NSMutableArray<CAShapeLayer *> *MonstersCircles;
 @property (nonatomic, strong) UIView *imguiHostView;
 @property (nonatomic, strong) MTKView *imguiMTKView;
