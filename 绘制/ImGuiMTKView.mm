@@ -84,8 +84,13 @@
         ImGui_ImplMetal_NewFrame(renderPassDescriptor);
         ImGui::NewFrame();
 
-        if (self.delegate && [self.delegate respondsToSelector:@selector(draw)]) {
-            [self.delegate draw];
+        if (self.delegate) {
+            if ([self.delegate respondsToSelector:@selector(draw)]) {
+                [self.delegate draw];
+            }
+            if ([self.delegate respondsToSelector:@selector(drawUI)]) {
+                [self.delegate drawUI];
+            }
         }
 
         // Rendering

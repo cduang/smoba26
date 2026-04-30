@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol ImGuiMTKViewDelegate<NSObject>
 
 - (void)draw;
+- (void)drawUI;
 
 @end
 

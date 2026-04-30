@@ -17,11 +17,7 @@
 #import <sys/types.h>
 #import <sys/sysctl.h>
 #import <mach-o/dyld.h>
-#import <objc/runtime.h>
-#include "Draw.h"
-#include <stdio.h>
-#include <math.h>
-#import "Utilties.h"
+#import "HeeeNoScreenShotView.h"
 #define kuandu  [UIScreen mainScreen].bounds.size.width
 #define gaodu [UIScreen mainScreen].bounds.size.height
 #define SMOBA_NSLog(format, ...) NSLog(@"SMOBA-Apibug: " format, ##__VA_ARGS__)
@@ -49,8 +45,16 @@
 @implementation SkillView
 @end
 
-@interface 绘图吧()
+@class ImGuiMTKView;
+
+@interface 绘图吧() <ImGuiMTKViewDelegate>
 @property (nonatomic, strong) NSMutableArray<CAShapeLayer *> *MonstersCircles;
+@property (nonatomic, strong) UIView *imguiHostView;
+@property (nonatomic, strong) MTKView *imguiMTKView;
+@property (nonatomic, strong) ImGuiMTKView *imguiRenderer;
+@property (nonatomic, strong) HeeeNoScreenShotView *noScreenShotView;
+@property (nonatomic, assign) BOOL imguiVisible;
+@property (nonatomic, assign) BOOL hideInVideoStream;
 @end
 
 @implementation 绘图吧
@@ -69,7 +73,8 @@ std::vector<SaveImage> NetImage2;
 std::vector<SaveImage> NetImage3;
 std::vector<SaveImage> NetImage4;
 
-bool 绘制方框,绘制技能,绘制野怪,绘制头像,绘制射线;
+bool 绘制方框 = false,绘制技能 = false,绘制野怪 = false,绘制头像 = false,绘制射线 = false;
+static BOOL gSwitchesLoaded = NO;
 
 SkillView* SkillTable[10];
 UIImageView* HeroImage[10];
@@ -122,12 +127,18 @@ SkillView* 玩家技能[10];
         
         self.backgroundColor = [UIColor clearColor];//背景色
         [self setUserInteractionEnabled:NO];
+
+        self.noScreenShotView = [[HeeeNoScreenShotView alloc] initWithFrame:self.bounds];
+        self.noScreenShotView.backgroundColor = [UIColor clearColor];
+        self.noScreenShotView.userInteractionEnabled = NO;
+        self.noScreenShotView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [self addSubview:self.noScreenShotView];
         
         Draw_Rect = [[CAShapeLayer alloc] init];
         Draw_Rect.frame = self.frame;
         Draw_Rect.strokeColor = UIColor.greenColor.CGColor;// 方框颜色
         Draw_Rect.fillColor = UIColor.clearColor.CGColor;
-        [self.layer addSublayer:Draw_Rect];
+        [self.noScreenShotView.layer addSublayer:Draw_Rect];
      
         for (int i=0; i<10; i++) {
             // 地图透视英雄图
@@ -138,7 +149,7 @@ SkillView* 玩家技能[10];
             HeroImage[i].hidden=YES;
             HeroImage[i].layer.borderColor = [UIColor redColor].CGColor;
             HeroImage[i].layer.borderWidth = 1.f;
-            [self addSubview:HeroImage[i]];
+            [self.noScreenShotView addSubview:HeroImage[i]];
             
 
             //回城警告
@@ -149,14 +160,14 @@ SkillView* 玩家技能[10];
             warningLabels[i].adjustsFontSizeToFitWidth = YES;
             warningLabels[i].minimumScaleFactor = 0.2;
             warningLabels[i].textAlignment = NSTextAlignmentCenter;
-            [self addSubview:warningLabels[i]];
+            [self.noScreenShotView addSubview:warningLabels[i]];
             
             //血条
             HeroBloodRing[i] = [CAShapeLayer layer];
             HeroBloodRing[i].strokeColor = [UIColor redColor].CGColor;//血条颜色
             HeroBloodRing[i].fillColor = [UIColor clearColor].CGColor;
             HeroBloodRing[i].lineWidth = 3; // 设置边框的宽度
-            [self.layer addSublayer:HeroBloodRing[i]];
+            [self.noScreenShotView.layer addSublayer:HeroBloodRing[i]];
             
         }
         
@@ -207,8 +218,7 @@ SkillView* 玩家技能[10];
             
             SkillTable[i].backgroundColor = [UIColor clearColor];
             [SkillTable[i] setHidden:YES];
-            [self addSubview:hpTable[i]];
-            [self addSubview:SkillTable[i]];
+            [self.noScreenShotView addSubview:SkillTable[i]];
         }
         
 //        Draw_血条背景 = [[CAShapeLayer alloc] init];
@@ -235,6 +245,30 @@ SkillView* 玩家技能[10];
 //            [_MonstersCircles addObject:MonstersCircle];
 //        }
         
+        self.imguiHostView = [[UIView alloc] initWithFrame:self.bounds];
+        self.imguiHostView.backgroundColor = [UIColor clearColor];
+        self.imguiHostView.userInteractionEnabled = YES;
+        self.imguiHostView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+
+        self.imguiMTKView = [[MTKView alloc] initWithFrame:self.bounds];
+        self.imguiMTKView.device = MTLCreateSystemDefaultDevice();
+        self.imguiMTKView.clearColor = MTLClearColorMake(0, 0, 0, 0);
+        self.imguiMTKView.backgroundColor = UIColor.clearColor;
+        self.imguiMTKView.opaque = NO;
+        self.imguiMTKView.enableSetNeedsDisplay = NO;
+        self.imguiMTKView.paused = NO;
+        self.imguiMTKView.preferredFramesPerSecond = 60;
+        self.imguiMTKView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [self.imguiHostView addSubview:self.imguiMTKView];
+        [self.noScreenShotView addSubview:self.imguiHostView];
+
+        self.imguiRenderer = [[ImGuiMTKView alloc] initWithView:self.imguiMTKView];
+        self.imguiRenderer.delegate = self;
+        [self.imguiRenderer initializePlatform];
+        self.imguiMTKView.delegate = self.imguiRenderer;
+        self.imguiVisible = YES;
+        self.hideInVideoStream = YES;
+
         CADisplayLink* Link = [CADisplayLink displayLinkWithTarget:self selector:@selector(huizhia)];
         Link.preferredFramesPerSecond = 60;
         [Link addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
@@ -255,34 +289,64 @@ SkillView* 玩家技能[10];
 
 
 
+-(void)drawUI
+{
+    if (!self.imguiVisible) {
+        return;
+    }
+
+    if (!gSwitchesLoaded) {
+        userDefaults = [[NSDictionary dictionaryWithContentsOfFile:USER_DEFAULTS_PATH] mutableCopy] ?: [NSMutableDictionary dictionary];
+        绘制野怪 = [[userDefaults objectForKey:@"FGmon"] boolValue];
+        绘制方框 = [[userDefaults objectForKey:@"FGbox"] boolValue];
+        绘制技能 = [[userDefaults objectForKey:@"FGhp"] boolValue];
+        绘制头像 = [[userDefaults objectForKey:@"TouXiang"] boolValue];
+        绘制射线 = [[userDefaults objectForKey:@"SheXian"] boolValue];
+        MiniMap.x = [[userDefaults objectForKey:@"FGmapx"] floatValue];
+        MiniMap.y = [[userDefaults objectForKey:@"FGmapy"] floatValue];
+        gSwitchesLoaded = YES;
+    }
+
+    ImGui::SetNextWindowSize(ImVec2(340, 300), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowBgAlpha(0.82f);
+    ImGui::Begin("功能开关", &self.imguiVisible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
+
+    ImGui::Text("绘制控制");
+    ImGui::Separator();
+    static bool videoStreamHidden = true;
+    videoStreamHidden = self.hideInVideoStream;
+    if (ImGui::Checkbox("视频流隐藏", &videoStreamHidden)) {
+        self.hideInVideoStream = videoStreamHidden;
+        self.noScreenShotView.hidden = !self.hideInVideoStream;
+        self.imguiHostView.hidden = !self.hideInVideoStream;
+    }
+    ImGui::Separator();
+    if (ImGui::Checkbox("方框", &绘制方框)) { userDefaults[@"FGbox"] = @(绘制方框); }
+    if (ImGui::Checkbox("技能", &绘制技能)) { userDefaults[@"FGhp"] = @(绘制技能); }
+    if (ImGui::Checkbox("野怪", &绘制野怪)) { userDefaults[@"FGmon"] = @(绘制野怪); }
+    if (ImGui::Checkbox("头像", &绘制头像)) { userDefaults[@"TouXiang"] = @(绘制头像); }
+    if (ImGui::Checkbox("射线", &绘制射线)) { userDefaults[@"SheXian"] = @(绘制射线); }
+
+    ImGui::Spacing();
+    ImGui::Text("小地图参数");
+    if (ImGui::SliderFloat("MiniMap X", &MiniMap.x, 0.0f, 1000.0f)) { userDefaults[@"FGmapx"] = @(MiniMap.x); }
+    if (ImGui::SliderFloat("MiniMap Y", &MiniMap.y, 0.0f, 1000.0f)) { userDefaults[@"FGmapy"] = @(MiniMap.y); }
+
+    ImGui::Spacing();
+    if (ImGui::Button("保存配置", ImVec2(-1, 32))) {
+        [userDefaults writeToFile:USER_DEFAULTS_PATH atomically:YES];
+    }
+
+    ImGui::End();
+}
+
 -(void)huizhia{
    /// if(绘制总开关){
     ///
-//    MiniMap.x =  [[NSUserDefaults standardUserDefaults] floatForKey:@"FGmapx"];
-//    MiniMap.y =  [[NSUserDefaults standardUserDefaults] floatForKey:@"FGmapy"];
-    userDefaults = [[NSDictionary dictionaryWithContentsOfFile:USER_DEFAULTS_PATH] mutableCopy] ?: [NSMutableDictionary dictionary];
-    NSNumber *野怪 = [userDefaults objectForKey: @"FGmon"];
-    NSNumber *方框 = [userDefaults objectForKey: @"FGbox"];
-    NSNumber *技能 = [userDefaults objectForKey: @"FGhp"];
-    NSNumber *头像 = [userDefaults objectForKey: @"TouXiang"];
-    NSNumber *射线 = [userDefaults objectForKey: @"SheXian"];
-//    NSNumber *直播 = [userDefaults objectForKey: @"ViewNeed"];
-    NSNumber *位置 = [userDefaults objectForKey: @"FGmapx"];
-    NSNumber *大小 = [userDefaults objectForKey: @"FGmapy"];
-    
-    
-    
-    绘制野怪 =[野怪 boolValue];
-    绘制头像 =[头像 boolValue];
-    绘制技能 =[技能 boolValue];
-    绘制射线 =[射线 boolValue];
-//    过直播开关 =[直播 boolValue];
-    
-    MiniMap.x =[位置 floatValue];
-    MiniMap.y =[大小 floatValue];
-    
-    
-    
+    if (!userDefaults) {
+        userDefaults = [[NSDictionary dictionaryWithContentsOfFile:USER_DEFAULTS_PATH] mutableCopy] ?: [NSMutableDictionary dictionary];
+    }
+
     for (int i=0; i<10; i++) {
         //移除过期的绘图
         [HeroImage[i] setHidden:YES];
@@ -314,7 +378,15 @@ SkillView* 玩家技能[10];
             path.lineWidth     = 10.f;
             path.lineCapStyle  = kCGLineCapRound;
             [Path_Rect appendPath:path];
-            
+
+            userDefaults[@"FGmon"] = @(绘制野怪);
+            userDefaults[@"FGbox"] = @(绘制方框);
+            userDefaults[@"FGhp"] = @(绘制技能);
+            userDefaults[@"TouXiang"] = @(绘制头像);
+            userDefaults[@"SheXian"] = @(绘制射线);
+            userDefaults[@"FGmapx"] = @(MiniMap.x);
+            userDefaults[@"FGmapy"] = @(MiniMap.y);
+
             if(RefreshMatrix()){//进入对局
                 SMOBA_NSLog(@"SMOBA-Apibug 刷新矩阵");
                 
