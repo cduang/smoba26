@@ -313,7 +313,9 @@ SkillView* 玩家技能[10];
 
     ImGui::SetNextWindowSize(ImVec2(340, 300), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowBgAlpha(0.82f);
-    ImGui::Begin("功能开关", &self.imguiVisible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
+    BOOL imguiWindowVisible = self.imguiVisible;
+    ImGui::Begin("功能开关", &imguiWindowVisible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
+    self.imguiVisible = imguiWindowVisible;
 
     ImGui::Text("绘制控制");
     ImGui::Separator();
@@ -324,6 +326,7 @@ SkillView* 玩家技能[10];
     }
     self.noScreenShotView.hidden = NO;
     self.imguiHostView.hidden = NO;
+    self.imguiMTKView.hidden = NO;
     ImGui::Separator();
     if (ImGui::Checkbox("方框", &绘制方框)) { userDefaults[@"FGbox"] = @(绘制方框); }
     if (ImGui::Checkbox("技能", &绘制技能)) { userDefaults[@"FGhp"] = @(绘制技能); }
