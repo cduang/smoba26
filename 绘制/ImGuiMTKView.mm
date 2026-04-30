@@ -70,8 +70,6 @@
     CGFloat framebufferScale = view.window.screen.scale ?: UIScreen.mainScreen.scale;
 #endif
     io.DisplayFramebufferScale = ImVec2(framebufferScale, framebufferScale);
-    io.DisplayVisibleMin = ImVec2(0.0f, 0.0f);
-    io.DisplayVisibleMax = io.DisplaySize;
 
     io.DeltaTime = 1.0f / float(view.preferredFramesPerSecond > 0 ? view.preferredFramesPerSecond : 60);
 
