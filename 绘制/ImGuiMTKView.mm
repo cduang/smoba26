@@ -51,22 +51,16 @@
 
 - (void)drawInMTKView:(MTKView *)view {
     ImGuiIO &io = ImGui::GetIO();
-    io.DisplaySize.x = view.bounds.size.width;
-    io.DisplaySize.y = view.bounds.size.height;
+    io.DisplaySize = ImVec2(view.bounds.size.width, view.bounds.size.height);
 
 #if TARGET_OS_OSX
     CGFloat framebufferScale = view.window.screen.backingScaleFactor ?: NSScreen.mainScreen.backingScaleFactor;
 #else
     CGFloat framebufferScale = view.window.screen.scale ?: UIScreen.mainScreen.scale;
 #endif
-    if (iPhone8P){
-        io.DisplayFramebufferScale = ImVec2(2.60, 2.60);
-    }else{
-        io.DisplayFramebufferScale = ImVec2(framebufferScale, framebufferScale);
-    }
+    io.DisplayFramebufferScale = ImVec2(framebufferScale, framebufferScale);
 
-    
-    io.DeltaTime = 1 / float(view.preferredFramesPerSecond);
+    io.DeltaTime = 1.0f / float(view.preferredFramesPerSecond > 0 ? view.preferredFramesPerSecond : 60);
 
     id<MTLCommandBuffer> commandBuffer = [self.commandQueue commandBuffer];
 
@@ -115,7 +109,15 @@
 }
 
 - (void)handleEvent:(UIEvent *_Nullable)event view:(UIView *_Nullable)view {
+    if (event.type != UIEventTypeTouches) {
+        return;
+    }
+
     UITouch *anyTouch = event.allTouches.anyObject;
+    if (!anyTouch) {
+        return;
+    }
+
     CGPoint touchLocation = [anyTouch locationInView:view];
     ImGuiIO &io = ImGui::GetIO();
     io.MousePos = ImVec2(touchLocation.x, touchLocation.y);
@@ -128,6 +130,8 @@
         }
     }
     io.MouseDown[0] = hasActiveTouch;
+    io.MouseWheel = 0.0f;
+    io.MouseWheelH = 0.0f;
 }
 
 -(id<MTLTexture>)loadTextureWithURL:(NSURL *)url {

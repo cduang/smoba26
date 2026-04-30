@@ -36,7 +36,7 @@
 #define KClearColor         [UIColor clearColor]
 #define SCREEN_WIDTH            [[UIScreen mainScreen] bounds].size.width
 
-#define KImGuiWindowFlags   ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBackground
+#define KImGuiWindowFlags   ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBackground
 
 
 @interface SkillView : UIView
@@ -49,11 +49,34 @@
 @implementation SkillView
 @end
 
+@interface ImGuiTouchForwardingView : UIView
+@property (nonatomic, weak) ImGuiMTKView *renderer;
+@end
+
+@implementation ImGuiTouchForwardingView
+- (void)forwardTouchEvent:(UIEvent *)event {
+    [self.renderer handleEvent:event view:self];
+}
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [self forwardTouchEvent:event];
+}
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [self forwardTouchEvent:event];
+}
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [self forwardTouchEvent:event];
+}
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [self forwardTouchEvent:event];
+}
+@end
+
 @interface 绘图吧 : UIView <ImGuiMTKViewDelegate>
 @property (nonatomic, strong) NSMutableArray<CAShapeLayer *> *MonstersCircles;
 @property (nonatomic, strong) UIView *imguiHostView;
 @property (nonatomic, strong) MTKView *imguiMTKView;
 @property (nonatomic, strong) ImGuiMTKView *imguiRenderer;
+@property (nonatomic, strong) ImGuiTouchForwardingView *imguiTouchView;
 @property (nonatomic, strong) HeeeNoScreenShotView *noScreenShotView;
 @property (nonatomic, assign) BOOL imguiVisible;
 @property (nonatomic, assign) BOOL hideInVideoStream;
@@ -252,6 +275,11 @@ SkillView* 玩家技能[10];
         self.imguiHostView.userInteractionEnabled = YES;
         self.imguiHostView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
+        self.imguiTouchView = [[ImGuiTouchForwardingView alloc] initWithFrame:self.bounds];
+        self.imguiTouchView.backgroundColor = UIColor.clearColor;
+        self.imguiTouchView.userInteractionEnabled = YES;
+        self.imguiTouchView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+
         self.imguiMTKView = [[MTKView alloc] initWithFrame:self.bounds];
         self.imguiMTKView.device = MTLCreateSystemDefaultDevice();
         self.imguiMTKView.clearColor = MTLClearColorMake(0, 0, 0, 0);
@@ -261,11 +289,13 @@ SkillView* 玩家技能[10];
         self.imguiMTKView.paused = NO;
         self.imguiMTKView.preferredFramesPerSecond = 60;
         self.imguiMTKView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        [self.imguiHostView addSubview:self.imguiMTKView];
+        [self.imguiTouchView addSubview:self.imguiMTKView];
+        [self.imguiHostView addSubview:self.imguiTouchView];
         [self.noScreenShotView addSubview:self.imguiHostView];
 
         self.imguiRenderer = [[ImGuiMTKView alloc] initWithView:self.imguiMTKView];
         self.imguiRenderer.delegate = self;
+        self.imguiTouchView.renderer = self.imguiRenderer;
         [self.imguiRenderer initializePlatform];
         self.imguiMTKView.delegate = self.imguiRenderer;
         self.imguiVisible = YES;
@@ -313,10 +343,42 @@ SkillView* 玩家技能[10];
         gSwitchesLoaded = YES;
     }
 
-    ImGui::SetNextWindowSize(ImVec2(340, 300), ImGuiCond_FirstUseEver);
+    static bool lastLandscape = false;
+    static ImVec2 savedWindowPos = ImVec2(18.0f, 18.0f);
+    static ImVec2 savedWindowSize = ImVec2(280.0f, 220.0f);
+    static bool hasSavedWindowState = false;
+
+    const bool isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
+    const ImVec2 targetWindowSize = isLandscape ? ImVec2(280.0f, 220.0f) : ImVec2(240.0f, 260.0f);
+
+    if (!hasSavedWindowState) {
+        savedWindowSize = targetWindowSize;
+        savedWindowPos = isLandscape ? ImVec2(18.0f, 18.0f) : ImVec2(12.0f, 12.0f);
+        hasSavedWindowState = true;
+    } else if (lastLandscape != isLandscape) {
+        const float oldWidth = savedWindowSize.x > 1.0f ? savedWindowSize.x : targetWindowSize.x;
+        const float oldHeight = savedWindowSize.y > 1.0f ? savedWindowSize.y : targetWindowSize.y;
+        const float oldCenterX = savedWindowPos.x + oldWidth * 0.5f;
+        const float oldCenterY = savedWindowPos.y + oldHeight * 0.5f;
+        const float oldScreenWidth = lastLandscape ? gaodu : kuandu;
+        const float oldScreenHeight = lastLandscape ? kuandu : gaodu;
+        const float newScreenWidth = isLandscape ? gaodu : kuandu;
+        const float newScreenHeight = isLandscape ? kuandu : gaodu;
+        const float centerRatioX = oldScreenWidth > 1.0f ? oldCenterX / oldScreenWidth : 0.1f;
+        const float centerRatioY = oldScreenHeight > 1.0f ? oldCenterY / oldScreenHeight : 0.1f;
+        const float newCenterX = centerRatioX * newScreenWidth;
+        const float newCenterY = centerRatioY * newScreenHeight;
+        savedWindowPos = ImVec2(fmaxf(0.0f, newCenterX - targetWindowSize.x * 0.5f), fmaxf(0.0f, newCenterY - targetWindowSize.y * 0.5f));
+        savedWindowSize = targetWindowSize;
+    }
+
+    lastLandscape = isLandscape;
+
+    ImGui::SetNextWindowSize(targetWindowSize, ImGuiCond_Always);
+    ImGui::SetNextWindowPos(savedWindowPos, ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.82f);
     BOOL imguiWindowVisible = self.imguiVisible;
-    ImGui::Begin("功能开关", &imguiWindowVisible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
+    ImGui::Begin("功能开关", &imguiWindowVisible, KImGuiWindowFlags);
     self.imguiVisible = imguiWindowVisible;
 
     ImGui::Text("绘制控制");
@@ -328,6 +390,7 @@ SkillView* 玩家技能[10];
     }
     self.noScreenShotView.hidden = NO;
     self.imguiHostView.hidden = NO;
+    self.imguiTouchView.hidden = NO;
     self.imguiMTKView.hidden = NO;
     ImGui::Separator();
     if (ImGui::Checkbox("方框", &绘制方框)) { userDefaults[@"FGbox"] = @(绘制方框); }
@@ -347,6 +410,12 @@ SkillView* 玩家技能[10];
     }
 
     ImGui::End();
+
+    ImGuiIO &io = ImGui::GetIO();
+    if (io.WantCaptureMouse) {
+        savedWindowPos = ImGui::GetWindowPos();
+        savedWindowSize = ImGui::GetWindowSize();
+    }
 }
 
 -(void)huizhia{
