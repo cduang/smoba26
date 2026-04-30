@@ -12,13 +12,19 @@ VERSION=$1
 VERSION=${VERSION#v}
 
 # Build using Xcode
+set -o pipefail
 xcodebuild clean build archive \
 -scheme TrollSpeed \
 -project THOR-HUD.xcodeproj \
 -sdk iphoneos \
 -destination 'generic/platform=iOS' \
 -archivePath TrollSpeed \
-CODE_SIGNING_ALLOWED=NO | xcpretty
+CODE_SIGNING_ALLOWED=NO 2>&1 | tee xcodebuild.log
+
+if [ ! -d TrollSpeed.xcarchive/Products ]; then
+    echo "Archive products directory missing; build likely failed."
+    exit 1
+fi
 
 cp supports/TS.entitlements TrollSpeed.xcarchive/Products
 cd TrollSpeed.xcarchive/Products/Applications
