@@ -353,7 +353,14 @@ SkillView* 玩家技能[10];
         }
         NSNumber *menuVisible = [userDefaults objectForKey:kImGuiMenuVisibleKey];
         NSNumber *enabled = [userDefaults objectForKey:@"FGimguiEnabled"];
-        self.imguiVisible = enabled ? enabled.boolValue : (menuVisible ? menuVisible.boolValue : NO);
+        if (!enabled && !menuVisible) {
+            self.imguiVisible = YES;
+            userDefaults[@"FGimguiEnabled"] = @(YES);
+            userDefaults[kImGuiMenuVisibleKey] = @(YES);
+            [userDefaults writeToFile:USER_DEFAULTS_PATH atomically:YES];
+        } else {
+            self.imguiVisible = enabled ? enabled.boolValue : (menuVisible ? menuVisible.boolValue : NO);
+        }
         gSwitchesLoaded = YES;
     }
 
