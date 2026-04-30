@@ -10,8 +10,8 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 
-#include "imgui.h"
-#include "imgui_impl_metal.h"
+#include "imgui/imgui.h"
+#include "imgui/Metal/imgui_impl_metal.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
