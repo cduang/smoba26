@@ -36,7 +36,7 @@
 #define KClearColor         [UIColor clearColor]
 #define SCREEN_WIDTH            [[UIScreen mainScreen] bounds].size.width
 
-#define KImGuiWindowFlags   ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBackground
+#define KImGuiWindowFlags   ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBackground
 
 
 @interface SkillView : UIView
@@ -54,6 +54,9 @@
 @end
 
 @implementation ImGuiTouchForwardingView
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    return YES;
+}
 - (void)forwardTouchEvent:(UIEvent *)event {
     [self.renderer handleEvent:event view:self];
 }
@@ -345,11 +348,11 @@ SkillView* 玩家技能[10];
 
     static bool lastLandscape = false;
     static ImVec2 savedWindowPos = ImVec2(18.0f, 18.0f);
-    static ImVec2 savedWindowSize = ImVec2(280.0f, 220.0f);
+    static ImVec2 savedWindowSize = ImVec2(220.0f, 170.0f);
     static bool hasSavedWindowState = false;
 
     const bool isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
-    const ImVec2 targetWindowSize = isLandscape ? ImVec2(280.0f, 220.0f) : ImVec2(240.0f, 260.0f);
+    const ImVec2 targetWindowSize = isLandscape ? ImVec2(220.0f, 170.0f) : ImVec2(200.0f, 180.0f);
 
     if (!hasSavedWindowState) {
         savedWindowSize = targetWindowSize;
@@ -412,7 +415,7 @@ SkillView* 玩家技能[10];
     ImGui::End();
 
     ImGuiIO &io = ImGui::GetIO();
-    if (io.WantCaptureMouse) {
+    if (io.WantCaptureMouse || io.WantCaptureKeyboard) {
         savedWindowPos = ImGui::GetWindowPos();
         savedWindowSize = ImGui::GetWindowSize();
     }
