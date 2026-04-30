@@ -103,6 +103,12 @@ std::vector<SaveImage> NetImage4;
 
 bool 绘制方框 = false,绘制技能 = false,绘制野怪 = false,绘制头像 = false,绘制射线 = false;
 static BOOL gSwitchesLoaded = NO;
+static NSString * const kImGuiMenuVisibleKey = @"FGimguiMenuVisible";
+static NSString * const kUsesCustomFontSizeKey = @"usesCustomFontSize";
+static NSString * const kRealCustomFontSizeKey = @"realCustomFontSize";
+static NSString * const kUsesCustomOffsetKey = @"usesCustomOffset";
+static NSString * const kRealCustomOffsetXKey = @"realCustomOffsetX";
+static NSString * const kRealCustomOffsetYKey = @"realCustomOffsetY";
 
 SkillView* SkillTable[10];
 UIImageView* HeroImage[10];
@@ -154,7 +160,8 @@ SkillView* 玩家技能[10];
       //  GameCanvas.y = self.frame.size.height;
         
         self.backgroundColor = [UIColor clearColor];//背景色
-        [self setUserInteractionEnabled:NO];
+        [self setUserInteractionEnabled:YES];
+        self.multipleTouchEnabled = YES;
 
         self.noScreenShotView = [[HeeeNoScreenShotView alloc] initWithFrame:self.bounds];
         self.noScreenShotView.backgroundColor = [UIColor clearColor];
@@ -281,6 +288,7 @@ SkillView* 玩家技能[10];
         self.imguiTouchView = [[ImGuiTouchForwardingView alloc] initWithFrame:self.bounds];
         self.imguiTouchView.backgroundColor = UIColor.clearColor;
         self.imguiTouchView.userInteractionEnabled = YES;
+        self.imguiTouchView.multipleTouchEnabled = YES;
         self.imguiTouchView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
         self.imguiMTKView = [[MTKView alloc] initWithFrame:self.bounds];
@@ -295,14 +303,18 @@ SkillView* 玩家技能[10];
         [self.imguiTouchView addSubview:self.imguiMTKView];
         [self.imguiHostView addSubview:self.imguiTouchView];
         [self.noScreenShotView addSubview:self.imguiHostView];
+        [self.noScreenShotView bringSubviewToFront:self.imguiHostView];
 
         self.imguiRenderer = [[ImGuiMTKView alloc] initWithView:self.imguiMTKView];
         self.imguiRenderer.delegate = self;
         self.imguiTouchView.renderer = self.imguiRenderer;
         [self.imguiRenderer initializePlatform];
         self.imguiMTKView.delegate = self.imguiRenderer;
-        self.imguiVisible = YES;
+        self.imguiVisible = NO;
         self.hideInVideoStream = YES;
+        self.imguiHostView.hidden = YES;
+        self.imguiTouchView.hidden = YES;
+        self.imguiMTKView.hidden = YES;
 
         CADisplayLink* Link = [CADisplayLink displayLinkWithTarget:self selector:@selector(huizhia)];
         Link.preferredFramesPerSecond = 60;
@@ -326,10 +338,6 @@ SkillView* 玩家技能[10];
 
 -(void)drawUI
 {
-    if (!self.imguiVisible) {
-        return;
-    }
-
     if (!gSwitchesLoaded) {
         userDefaults = [[NSDictionary dictionaryWithContentsOfFile:USER_DEFAULTS_PATH] mutableCopy] ?: [NSMutableDictionary dictionary];
         绘制野怪 = [[userDefaults objectForKey:@"FGmon"] boolValue];
@@ -343,16 +351,29 @@ SkillView* 玩家技能[10];
         if (![[userDefaults objectForKey:@"FGhideVideo"] isKindOfClass:[NSNumber class]]) {
             self.hideInVideoStream = YES;
         }
+        NSNumber *menuVisible = [userDefaults objectForKey:kImGuiMenuVisibleKey];
+        NSNumber *enabled = [userDefaults objectForKey:@"FGimguiEnabled"];
+        self.imguiVisible = enabled ? enabled.boolValue : (menuVisible ? menuVisible.boolValue : NO);
         gSwitchesLoaded = YES;
     }
 
+    if (!self.imguiVisible) {
+        self.imguiHostView.hidden = YES;
+        self.imguiTouchView.hidden = YES;
+        self.imguiMTKView.hidden = YES;
+        return;
+    }
+    self.imguiHostView.hidden = NO;
+    self.imguiTouchView.hidden = NO;
+    self.imguiMTKView.hidden = NO;
+
     static bool lastLandscape = false;
     static ImVec2 savedWindowPos = ImVec2(18.0f, 18.0f);
-    static ImVec2 savedWindowSize = ImVec2(220.0f, 170.0f);
+    static ImVec2 savedWindowSize = ImVec2(220.0f, 240.0f);
     static bool hasSavedWindowState = false;
 
     const bool isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
-    const ImVec2 targetWindowSize = isLandscape ? ImVec2(220.0f, 170.0f) : ImVec2(200.0f, 180.0f);
+    const ImVec2 targetWindowSize = isLandscape ? ImVec2(240.0f, 300.0f) : ImVec2(220.0f, 320.0f);
 
     if (!hasSavedWindowState) {
         savedWindowSize = targetWindowSize;
@@ -380,21 +401,37 @@ SkillView* 玩家技能[10];
     ImGui::SetNextWindowSize(targetWindowSize, ImGuiCond_Always);
     ImGui::SetNextWindowPos(savedWindowPos, ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.82f);
-    BOOL imguiWindowVisible = self.imguiVisible;
-    ImGui::Begin("功能开关", &imguiWindowVisible, KImGuiWindowFlags);
-    self.imguiVisible = imguiWindowVisible;
 
-    ImGui::Text("绘制控制");
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.locale = [NSLocale localeWithLocaleIdentifier:@"zh_CN"];
+    formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
+    NSString *title = [formatter stringFromDate:[NSDate date]];
+
+    bool imguiWindowVisible = self.imguiVisible;
+    ImGui::Begin(title.UTF8String, &imguiWindowVisible, KImGuiWindowFlags);
+    self.imguiVisible = imguiWindowVisible;
+    userDefaults[kImGuiMenuVisibleKey] = @(self.imguiVisible);
+
+    self.noScreenShotView.hidden = NO;
+    self.imguiHostView.hidden = NO;
+    self.imguiTouchView.hidden = NO;
+    self.imguiMTKView.hidden = NO;
+
+    ImGui::Text("菜单状态");
+    bool menuVisible = self.imguiVisible;
+    if (ImGui::Checkbox("总开关", &menuVisible)) {
+        self.imguiVisible = menuVisible;
+        userDefaults[@"FGimguiEnabled"] = @(self.imguiVisible);
+        userDefaults[kImGuiMenuVisibleKey] = @(self.imguiVisible);
+    }
+
     ImGui::Separator();
     bool videoStreamHidden = self.hideInVideoStream;
     if (ImGui::Checkbox("视频流隐藏", &videoStreamHidden)) {
         self.hideInVideoStream = videoStreamHidden;
         userDefaults[@"FGhideVideo"] = @(self.hideInVideoStream);
     }
-    self.noScreenShotView.hidden = NO;
-    self.imguiHostView.hidden = NO;
-    self.imguiTouchView.hidden = NO;
-    self.imguiMTKView.hidden = NO;
+
     ImGui::Separator();
     if (ImGui::Checkbox("方框", &绘制方框)) { userDefaults[@"FGbox"] = @(绘制方框); }
     if (ImGui::Checkbox("技能", &绘制技能)) { userDefaults[@"FGhp"] = @(绘制技能); }
@@ -408,9 +445,35 @@ SkillView* 玩家技能[10];
     if (ImGui::SliderFloat("MiniMap Y", &MiniMap.y, 0.0f, 1000.0f)) { userDefaults[@"FGmapy"] = @(MiniMap.y); }
 
     ImGui::Spacing();
+    ImGui::Text("TIPA主页滑块");
+    bool useCustomFontSize = [[userDefaults objectForKey:kUsesCustomFontSizeKey] boolValue];
+    bool useCustomOffset = [[userDefaults objectForKey:kUsesCustomOffsetKey] boolValue];
+    float customFontSize = [[userDefaults objectForKey:kRealCustomFontSizeKey] floatValue];
+    float customOffsetX = [[userDefaults objectForKey:kRealCustomOffsetXKey] floatValue];
+    float customOffsetY = [[userDefaults objectForKey:kRealCustomOffsetYKey] floatValue];
+
+    if (ImGui::Checkbox("使用自定义字体大小", &useCustomFontSize)) {
+        userDefaults[kUsesCustomFontSizeKey] = @(useCustomFontSize);
+    }
+    if (ImGui::SliderFloat("字体大小", &customFontSize, 8.0f, 12.0f, "%.1f")) {
+        userDefaults[kRealCustomFontSizeKey] = @(customFontSize);
+    }
+    if (ImGui::Checkbox("使用自定义偏移", &useCustomOffset)) {
+        userDefaults[kUsesCustomOffsetKey] = @(useCustomOffset);
+    }
+    if (ImGui::SliderFloat("偏移 X", &customOffsetX, -100.0f, 100.0f, "%.1f")) {
+        userDefaults[kRealCustomOffsetXKey] = @(customOffsetX);
+    }
+    if (ImGui::SliderFloat("偏移 Y", &customOffsetY, -100.0f, 100.0f, "%.1f")) {
+        userDefaults[kRealCustomOffsetYKey] = @(customOffsetY);
+    }
+
+    ImGui::Spacing();
     if (ImGui::Button("保存配置", ImVec2(-1, 32))) {
         [userDefaults writeToFile:USER_DEFAULTS_PATH atomically:YES];
     }
+    userDefaults[@"FGimguiEnabled"] = @(self.imguiVisible);
+    userDefaults[kImGuiMenuVisibleKey] = @(self.imguiVisible);
 
     ImGui::End();
 

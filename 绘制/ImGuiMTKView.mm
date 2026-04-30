@@ -35,15 +35,26 @@
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGui::StyleColorsLight();
-        
-//#if 0
-       ImGuiIO & io = ImGui::GetIO();
-            ImFontConfig config;
-            config.FontDataOwnedByAtlas = false;
-            io.Fonts->AddFontFromMemoryTTF((void *)baidu_font_data, baidu_font_size, 40.0f, &config, io.Fonts->GetGlyphRangesChineseFull());
-            
-            ImGui::StyleColorsLight();
-//#endif
+
+        ImGuiIO &io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
+
+        ImGuiStyle &style = ImGui::GetStyle();
+        style.WindowRounding = 8.0f;
+        style.FrameRounding = 6.0f;
+        style.GrabRounding = 6.0f;
+        style.WindowPadding = ImVec2(10.0f, 10.0f);
+        style.FramePadding = ImVec2(8.0f, 4.0f);
+        style.ItemSpacing = ImVec2(8.0f, 6.0f);
+        style.ScrollbarSize = 12.0f;
+        style.WindowMinSize = ImVec2(160.0f, 120.0f);
+
+        ImFontConfig config;
+        config.FontDataOwnedByAtlas = false;
+        io.Fonts->Clear();
+        io.Fonts->AddFontFromMemoryTTF((void *)baidu_font_data, baidu_font_size, 18.0f, &config, io.Fonts->GetGlyphRangesChineseFull());
+        io.FontGlobalScale = 1.0f;
     }
 
     return self;
@@ -59,6 +70,8 @@
     CGFloat framebufferScale = view.window.screen.scale ?: UIScreen.mainScreen.scale;
 #endif
     io.DisplayFramebufferScale = ImVec2(framebufferScale, framebufferScale);
+    io.DisplayVisibleMin = ImVec2(0.0f, 0.0f);
+    io.DisplayVisibleMax = io.DisplaySize;
 
     io.DeltaTime = 1.0f / float(view.preferredFramesPerSecond > 0 ? view.preferredFramesPerSecond : 60);
 

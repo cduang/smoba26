@@ -50,7 +50,7 @@ import UIKit
 
     open override func settingDidSelect(index: Int, completion: @escaping () -> ()) {
         if index == 0 && alreadyLaunched {
-            restartRequired = true
+            restartRequired = false
         }
         delegate?.settingDidSelect(key: settingKey(index: index))
         completion()
