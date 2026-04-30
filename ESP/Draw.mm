@@ -415,7 +415,7 @@ SkillView* 玩家技能[10];
     NSString *title = [formatter stringFromDate:[NSDate date]];
 
     bool imguiWindowVisible = self.imguiVisible;
-    ImGui::Begin(title.UTF8String, &imguiWindowVisible, KImGuiWindowFlags);
+    ImGui::Begin("功能开关##main", &imguiWindowVisible, KImGuiWindowFlags);
     self.imguiVisible = imguiWindowVisible;
     userDefaults[kImGuiMenuVisibleKey] = @(self.imguiVisible);
 
@@ -425,6 +425,9 @@ SkillView* 玩家技能[10];
     self.imguiMTKView.hidden = NO;
 
     ImGui::Text("菜单状态");
+    ImGui::SameLine();
+    ImGui::TextDisabled("%s", title.UTF8String);
+
     bool menuVisible = self.imguiVisible;
     if (ImGui::Checkbox("总开关", &menuVisible)) {
         self.imguiVisible = menuVisible;
@@ -432,55 +435,13 @@ SkillView* 玩家技能[10];
         userDefaults[kImGuiMenuVisibleKey] = @(self.imguiVisible);
     }
 
-    ImGui::Separator();
-    bool videoStreamHidden = self.hideInVideoStream;
-    if (ImGui::Checkbox("视频流隐藏", &videoStreamHidden)) {
-        self.hideInVideoStream = videoStreamHidden;
-        userDefaults[@"FGhideVideo"] = @(self.hideInVideoStream);
-    }
-
-    ImGui::Separator();
-    if (ImGui::Checkbox("方框", &绘制方框)) { userDefaults[@"FGbox"] = @(绘制方框); }
-    if (ImGui::Checkbox("技能", &绘制技能)) { userDefaults[@"FGhp"] = @(绘制技能); }
-    if (ImGui::Checkbox("野怪", &绘制野怪)) { userDefaults[@"FGmon"] = @(绘制野怪); }
-    if (ImGui::Checkbox("头像", &绘制头像)) { userDefaults[@"TouXiang"] = @(绘制头像); }
-    if (ImGui::Checkbox("射线", &绘制射线)) { userDefaults[@"SheXian"] = @(绘制射线); }
-
     ImGui::Spacing();
-    ImGui::Text("小地图参数");
-    if (ImGui::SliderFloat("MiniMap X", &MiniMap.x, 0.0f, 1000.0f)) { userDefaults[@"FGmapx"] = @(MiniMap.x); }
-    if (ImGui::SliderFloat("MiniMap Y", &MiniMap.y, 0.0f, 1000.0f)) { userDefaults[@"FGmapy"] = @(MiniMap.y); }
-
-    ImGui::Spacing();
-    ImGui::Text("TIPA主页滑块");
-    bool useCustomFontSize = [[userDefaults objectForKey:kUsesCustomFontSizeKey] boolValue];
-    bool useCustomOffset = [[userDefaults objectForKey:kUsesCustomOffsetKey] boolValue];
-    float customFontSize = [[userDefaults objectForKey:kRealCustomFontSizeKey] floatValue];
-    float customOffsetX = [[userDefaults objectForKey:kRealCustomOffsetXKey] floatValue];
-    float customOffsetY = [[userDefaults objectForKey:kRealCustomOffsetYKey] floatValue];
-
-    if (ImGui::Checkbox("使用自定义字体大小", &useCustomFontSize)) {
-        userDefaults[kUsesCustomFontSizeKey] = @(useCustomFontSize);
-    }
-    if (ImGui::SliderFloat("字体大小", &customFontSize, 8.0f, 12.0f, "%.1f")) {
-        userDefaults[kRealCustomFontSizeKey] = @(customFontSize);
-    }
-    if (ImGui::Checkbox("使用自定义偏移", &useCustomOffset)) {
-        userDefaults[kUsesCustomOffsetKey] = @(useCustomOffset);
-    }
-    if (ImGui::SliderFloat("偏移 X", &customOffsetX, -100.0f, 100.0f, "%.1f")) {
-        userDefaults[kRealCustomOffsetXKey] = @(customOffsetX);
-    }
-    if (ImGui::SliderFloat("偏移 Y", &customOffsetY, -100.0f, 100.0f, "%.1f")) {
-        userDefaults[kRealCustomOffsetYKey] = @(customOffsetY);
-    }
-
-    ImGui::Spacing();
+    ImGui::Text("保存状态");
     if (ImGui::Button("保存配置", ImVec2(-1, 32))) {
+        userDefaults[@"FGimguiEnabled"] = @(self.imguiVisible);
+        userDefaults[kImGuiMenuVisibleKey] = @(self.imguiVisible);
         [userDefaults writeToFile:USER_DEFAULTS_PATH atomically:YES];
     }
-    userDefaults[@"FGimguiEnabled"] = @(self.imguiVisible);
-    userDefaults[kImGuiMenuVisibleKey] = @(self.imguiVisible);
 
     ImGui::End();
 
