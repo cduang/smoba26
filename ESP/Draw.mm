@@ -304,6 +304,10 @@ SkillView* 玩家技能[10];
         绘制射线 = [[userDefaults objectForKey:@"SheXian"] boolValue];
         MiniMap.x = [[userDefaults objectForKey:@"FGmapx"] floatValue];
         MiniMap.y = [[userDefaults objectForKey:@"FGmapy"] floatValue];
+        self.hideInVideoStream = [[userDefaults objectForKey:@"FGhideVideo"] boolValue];
+        if (![[userDefaults objectForKey:@"FGhideVideo"] isKindOfClass:[NSNumber class]]) {
+            self.hideInVideoStream = YES;
+        }
         gSwitchesLoaded = YES;
     }
 
@@ -313,13 +317,13 @@ SkillView* 玩家技能[10];
 
     ImGui::Text("绘制控制");
     ImGui::Separator();
-    static bool videoStreamHidden = true;
-    videoStreamHidden = self.hideInVideoStream;
+    bool videoStreamHidden = self.hideInVideoStream;
     if (ImGui::Checkbox("视频流隐藏", &videoStreamHidden)) {
         self.hideInVideoStream = videoStreamHidden;
-        self.noScreenShotView.hidden = !self.hideInVideoStream;
-        self.imguiHostView.hidden = !self.hideInVideoStream;
+        userDefaults[@"FGhideVideo"] = @(self.hideInVideoStream);
     }
+    self.noScreenShotView.hidden = NO;
+    self.imguiHostView.hidden = NO;
     ImGui::Separator();
     if (ImGui::Checkbox("方框", &绘制方框)) { userDefaults[@"FGbox"] = @(绘制方框); }
     if (ImGui::Checkbox("技能", &绘制技能)) { userDefaults[@"FGhp"] = @(绘制技能); }
@@ -386,6 +390,7 @@ SkillView* 玩家技能[10];
             userDefaults[@"SheXian"] = @(绘制射线);
             userDefaults[@"FGmapx"] = @(MiniMap.x);
             userDefaults[@"FGmapy"] = @(MiniMap.y);
+            userDefaults[@"FGhideVideo"] = @(self.hideInVideoStream);
 
             if(RefreshMatrix()){//进入对局
                 SMOBA_NSLog(@"SMOBA-Apibug 刷新矩阵");
