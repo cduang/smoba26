@@ -302,19 +302,25 @@ SkillView* 玩家技能[10];
         self.imguiMTKView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         [self.imguiTouchView addSubview:self.imguiMTKView];
         [self.imguiHostView addSubview:self.imguiTouchView];
-        [self.noScreenShotView addSubview:self.imguiHostView];
-        [self.noScreenShotView bringSubviewToFront:self.imguiHostView];
+        [self addSubview:self.imguiHostView];
+        [self bringSubviewToFront:self.imguiHostView];
+        self.imguiHostView.layer.zPosition = 9999;
+        self.imguiTouchView.layer.zPosition = 9999;
+        self.imguiMTKView.layer.zPosition = 9999;
 
         self.imguiRenderer = [[ImGuiMTKView alloc] initWithView:self.imguiMTKView];
         self.imguiRenderer.delegate = self;
         self.imguiTouchView.renderer = self.imguiRenderer;
         [self.imguiRenderer initializePlatform];
         self.imguiMTKView.delegate = self.imguiRenderer;
-        self.imguiVisible = NO;
+        self.imguiVisible = YES;
         self.hideInVideoStream = YES;
-        self.imguiHostView.hidden = YES;
-        self.imguiTouchView.hidden = YES;
-        self.imguiMTKView.hidden = YES;
+        self.imguiHostView.hidden = NO;
+        self.imguiTouchView.hidden = NO;
+        self.imguiMTKView.hidden = NO;
+        self.imguiHostView.alpha = 1.0;
+        self.imguiTouchView.alpha = 1.0;
+        self.imguiMTKView.alpha = 1.0;
 
         CADisplayLink* Link = [CADisplayLink displayLinkWithTarget:self selector:@selector(huizhia)];
         Link.preferredFramesPerSecond = 60;
@@ -330,6 +336,13 @@ SkillView* 玩家技能[10];
     [super layoutSubviews];
     CGFloat Width = CGRectGetWidth(self.frame);
     CGFloat Height = CGRectGetHeight(self.frame);
+
+    self.noScreenShotView.frame = self.bounds;
+    self.imguiHostView.frame = self.bounds;
+    self.imguiTouchView.frame = self.imguiHostView.bounds;
+    self.imguiMTKView.frame = self.imguiTouchView.bounds;
+
+    [self bringSubviewToFront:self.imguiHostView];
 }
 
 
@@ -364,15 +377,13 @@ SkillView* 玩家技能[10];
         gSwitchesLoaded = YES;
     }
 
-    if (!self.imguiVisible) {
-        self.imguiHostView.hidden = YES;
-        self.imguiTouchView.hidden = YES;
-        self.imguiMTKView.hidden = YES;
-        return;
-    }
     self.imguiHostView.hidden = NO;
     self.imguiTouchView.hidden = NO;
     self.imguiMTKView.hidden = NO;
+
+    if (!self.imguiVisible) {
+        return;
+    }
 
     static bool lastLandscape = false;
     static ImVec2 savedWindowPos = ImVec2(18.0f, 18.0f);
@@ -450,6 +461,10 @@ SkillView* 玩家技能[10];
         savedWindowPos = ImGui::GetWindowPos();
         savedWindowSize = ImGui::GetWindowSize();
     }
+
+    [self.noScreenShotView bringSubviewToFront:self.imguiHostView];
+    [self.imguiHostView bringSubviewToFront:self.imguiTouchView];
+    [self.imguiTouchView bringSubviewToFront:self.imguiMTKView];
 }
 
 -(void)huizhia{
