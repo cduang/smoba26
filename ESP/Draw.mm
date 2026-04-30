@@ -20,6 +20,7 @@
 #import <MetalKit/MetalKit.h>
 #import <vector>
 #import "HeeeNoScreenShotView.h"
+#import "Utilties.h"
 #import "../绘制/ImGuiMTKView.h"
 #define kuandu  [UIScreen mainScreen].bounds.size.width
 #define gaodu [UIScreen mainScreen].bounds.size.height
