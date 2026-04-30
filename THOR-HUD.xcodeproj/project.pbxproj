@@ -80,6 +80,8 @@
 		D1A0F0012D00000100000001 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D1A0F0012D00000100000011 /* Metal.framework */; };
 		D1A0F0012D00000100000002 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D1A0F0012D00000100000012 /* MetalKit.framework */; };
 		D1A0F0012D00000100000003 /* ImGuiMTKView.mm in Sources */ = {isa = PBXBuildFile; fileRef = D1A0F0012D00000100000013 /* ImGuiMTKView.mm */; };
+		D1A0F0012D00000100000004 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D1A0F0012D00000100000014 /* imgui.cpp */; };
+		D1A0F0012D00000100000005 /* imgui_impl_metal.mm in Sources */ = {isa = PBXBuildFile; fileRef = D1A0F0012D00000100000015 /* imgui_impl_metal.mm */; };
 		CC8DDA8F2B654DC8001C7C9E /* ActivateHUDIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC8DDA8E2B654DC8001C7C9E /* ActivateHUDIntent.swift */; };
 		CC8DDA922B655156001C7C9E /* DeactivateHUDIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC8DDA912B655156001C7C9E /* DeactivateHUDIntent.swift */; };
 		CC8DDA952B6551C7001C7C9E /* ToggleHUDIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC8DDA942B655183001C7C9E /* ToggleHUDIntent.swift */; };
@@ -196,6 +198,8 @@
 		D1A0F0012D00000100000011 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		D1A0F0012D00000100000012 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		D1A0F0012D00000100000013 /* ImGuiMTKView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "绘制/ImGuiMTKView.mm"; sourceTree = SOURCE_ROOT; };
+		D1A0F0012D00000100000014 /* imgui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "绘制/imgui/imgui.cpp"; sourceTree = SOURCE_ROOT; };
+		D1A0F0012D00000100000015 /* imgui_impl_metal.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "绘制/imgui/Metal/imgui_impl_metal.mm"; sourceTree = SOURCE_ROOT; };
 		CC8DDA8E2B654DC8001C7C9E /* ActivateHUDIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivateHUDIntent.swift; sourceTree = "<group>"; };
 		CC8DDA912B655156001C7C9E /* DeactivateHUDIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeactivateHUDIntent.swift; sourceTree = "<group>"; };
 		CC8DDA942B655183001C7C9E /* ToggleHUDIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleHUDIntent.swift; sourceTree = "<group>"; };
@@ -622,7 +626,9 @@
 				04D9288C2B7470280039E565 /* GameReader.mm in Sources */,
 				A5AA231B2B6D016B00629F50 /* Draw.mm in Sources */,
 			D1A0F0012D00000100000003 /* ImGuiMTKView.mm in Sources */,
-				CC711D4E2B5BF5C6007235A6 /* HUDMainApplicationDelegate.mm in Sources */,
+				D1A0F0012D00000100000004 /* imgui.cpp in Sources */,
+			D1A0F0012D00000100000005 /* imgui_impl_metal.mm in Sources */,
+			CC711D4E2B5BF5C6007235A6 /* HUDMainApplicationDelegate.mm in Sources */,
 				CC711D5A2B5BF5C6007235A6 /* SPLarkTransitioningDelegate.swift in Sources */,
 				CC711D542B5BF5C6007235A6 /* SPLarkSettingsCollectionViewCell.swift in Sources */,
 				CC711D4C2B5BF5C6007235A6 /* HUDMainWindow.mm in Sources */,
